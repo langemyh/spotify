@@ -1,0 +1,44 @@
+/* GENERAL */
+body { font-family: verdana, arial, helvetica; padding: 30px; margin: 0px;}
+h1 { font-size: 1.5em; color: rgb(0, 10, 50); }
+p {}
+a, a:visited { text-decoration: none; color: rgb(18, 119, 155); }
+a:hover, a:active { color: rgb(237, 136, 100); }
+table { border-collapse: collapse; }
+table tr, td { vertical-align: top; padding-right: 1em;}
+table td.artist, td.title, td.album { font-weight: bold; }
+ul { list-style: none; margin: 0; padding: 0; }
+li { list-style: none; }
+
+
+table.big input { 
+	font-size: 1.0em;
+	width: 500px;
+	padding: 8px 6px;
+	border: 1px solid #CCC;
+	
+	box-shadow: inset 0 1px 2px rgba(0,0,0,0.1),0 1px 0 rgba(200, 162, 200, 0.2);
+	-webkit-box-shadow: inset 0 1px 2px rgba(0,0,0,0.1),0 1px 0 rgba(200, 162, 200,0.2);
+	
+	border-radius: 4px;
+	-webkit-border-radius: 4px;
+	-moz-border-radius: 4px;
+}
+
+table.big input.submit { 
+	background-color: white;
+	width: 514px;
+}
+
+table.big input:focus { 
+	border: 2px solid rgb(11, 81, 101);
+}
+
+table.big textarea {
+	width: 507px;
+}
+
+textarea#playlist {
+	width: 400px;
+	height: 300px;
+}

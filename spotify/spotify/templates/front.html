@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block javascript %}
+<script type="text/javascript">
+	$(document).ready(function() {
+		{% for field in form.visible_fields %}
+			$('#{{ field.id_for_label }}').focusin(function() {
+				$('span#{{ field.id_for_label }}').text('{{ field.help_text }}');
+			});
+		{% endfor %}
+		}
+	);
+</script>
+{% endblock %}
+
+
+{% block content %}
+<h1>Spotify lookup</h1>
+<p>Enter a Spotify URI or URL, and get the artist, album and the song title.</p>
+
+<form action="/spotify/" method="POST">
+	<table class="big">
+		{% csrf_token %}
+		{% for field in form.visible_fields %}
+		<tr>
+			<td>{{ field }} <span id="{{ field.id_for_label }}"></span> {{ field.errors }}</td>
+		</tr>
+		{% endfor %}		
+	<tr>
+			<td><input class="submit" type="submit" value="Lookup" /></td>
+		</tr>
+	</table>
+</form>
+
+<h1>Spotify playlist</h1>
+<p>Enter artist and songtitle (artist - title) and get a suggestion for a list</br>
+of spotify URI's to paste into a Spotify playlist. One artist - title per line</p>
+
+<form action="/playlist/" method="POST">
+	<table class="big">
+		{% csrf_token %}
+		{% for field in playlist.visible_fields %}
+		<tr>
+			<td>{{ field }} <span id="{{ field.id_for_label }}"></span> {{ field.errors }}</td>
+		</tr>
+		{% endfor %}		
+	<tr>
+			<td><input class="submit" type="submit" value="Lookup" /></td>
+		</tr>
+	</table>
+</form>
+{% endblock %}

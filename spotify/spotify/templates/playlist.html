@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h1>Spotify playlist</h1>
+<p>Enter search and get a suggestion for a list of spotify URI's to paste into</br>
+a Spotify playlist. One search per line</p>
+
+<form action="/playlist/" method="POST">
+	<table class="big">
+		{% csrf_token %}
+		{% for field in form.visible_fields %}
+		<tr>
+			<td>{{ field }} <span id="{{ field.id_for_label }}"></span> {{ field.errors }}</td>
+		</tr>
+		{% endfor %}		
+		<tr>
+			<td><input class="submit" type="submit" value="Lookup" /></td>
+		</tr>
+	</table>
+</form>
+
+
+{% if playlist %}
+<h1>Playlist {{ playlist|length }}/{{ length }}</h1>
+<ul>
+	{% for song in playlist %}
+			{% if song.artist and song.title %}
+				<li><a href="{{ song.url }}" target="_new" title="{{ song.artist }} - {{ song.title }}">{{ song.artist }} - {{ song.title }}</a></li>
+			{% endif %}
+	{% endfor %}
+</ul>
+
+<p>
+<textarea id="playlist">
+{% for song in playlist %}{{ song.uri }}
+{% endfor %}
+</textarea>
+</p>
+{% endif %}
+
+{% if missed %}
+<h1>Missed {{ missed|length }}</h1>
+<p>Coulnd't find a match for these</p>
+<ul>
+	{% for song in missed %}
+		<li>{{ song }}</li>
+	{% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

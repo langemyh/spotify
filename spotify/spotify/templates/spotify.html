@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>
+	{{ type|capfirst }} – <a href="spotify:{{ type }}:{{ uri }}" title="{{ data.title }}">{{ title|first }}</a>
+</h1>
+<table>
+	{% if not type == 'track' %}
+		{% if data.track == title %}
+			<tr>
+				<td class="title">Title:</td>
+				<td>{{ data.track }}</td>
+			</tr>
+		{% endif %}
+	{% endif %}
+
+	{% if not type == 'artist' %}
+		{% if data.artist %}
+			<tr>
+				<td class="artist">
+					Artist{{ data.artist|pluralize }}:
+				<td>
+				<ul>
+					{% for artist in data.artist %}
+					<li>
+						<a href="{{ artist.artistSURI }}">{{ artist.artist }}</a>
+					</li>
+					{% endfor %}
+				</ul>
+			</td>
+		</tr>
+		{% endif %}
+	{% endif %}
+	
+	{% if not type == 'album' %}	
+		{% if data.album %}
+			{% for album in data.album %}
+				<tr>
+					<td class="album">Album{{ data.album|pluralize }}:</td>
+					<td><a href="{{ album.albumSURI }}">{{ album.album }}</a></td>
+				</tr>
+			{% endfor %}
+		{% endif %}
+	{% endif %}
+</table>
+{% endblock %}
