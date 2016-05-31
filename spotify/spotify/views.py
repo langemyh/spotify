@@ -22,9 +22,10 @@ def front(request):
 @csrf_exempt
 def spotify(request, handler=None, type=None, uri=None):
     # If the data comes from the form
-    # http://open.spotify.com/track/6A7qC3kcSp2leiG5r5KZj6
+    # https://open.spotify.com/track/6A7qC3kcSp2leiG5r5KZj6
+    # spotify:track:063KUC8KY6hyfJqA1z17aN
     http_match = re.compile(
-            r'http://open\.spotify\.com/(album|track|artist)/[a-zA-Z0-9]{22}')
+            r'http[s]?://open\.spotify\.com/(album|track|artist)/[a-zA-Z0-9]{22}')
     spotify_match = re.compile(
             r'spotify:(album|track|artist):[a-zA-Z0-9]{22}')
 
@@ -41,63 +42,120 @@ def spotify(request, handler=None, type=None, uri=None):
         else:
             return HttpResponseRedirect('/')
         
-        if not handler == 'spotify' and not handler == 'http:':
+        if not handler == 'spotify' and not handler == 'http:' and not handler == 'https:':
             return HttpResponseRedirect('/')
 
-   
-    url = u'http://ws.spotify.com/lookup/1/?uri=spotify:%s:%s' % (type, uri)
-    xml_data = urlopen(url).read()
-    dom = minidom.parseString(xml_data)
-
-    # Find the titles
-    data = {}
-    track = []
-    try:
-        for title in dom.getElementsByTagName('track'):
-            track.append(
-                    title.getElementsByTagName('name')[0].firstChild.nodeValue)
-        data['track'] = track
-    except:
-        pass
+        try:
+            if type == 'track':
+                data = track(uri=uri)
+            elif type == 'album':
+                data = album(uri=uri)
+            elif type == 'artist':
+                data = artist(uri=uri)
+            else:
+                return HttpResponseRedirect('/')
     
-    # Find the artists
+            context = {
+                 'page_title': 'Spotify',
+                 'type': type,
+                 'title': data[type],
+                 'uri': uri,
+                 'data': data,
+             }
+            
+            return render(request, 'spotify.html', context)
+        except:
+            return HttpResponseRedirect('/')
+            
+    return HttpResponseRedirect('/')
+
+def track(type='tracks',uri=None):
+    # https://api.spotify.com/v1/tracks/6eUKZXaKkcviH0Ku9w2n3V
+    url = u'https://api.spotify.com/v1/%s/%s' % (type, uri)
+    result = json.loads(urlopen(url).read())
+
+    track = {
+        'name': result['name'],
+        'uri': result['uri'],
+        'url': result['external_urls']['spotify'],
+        }
+    
+    album = {
+        'name': result['album']['name'],
+        'uri': result['album']['uri'],
+        'url': result['album']['external_urls']['spotify'],
+        }
+    
     artists = []
-    try:
-        for artist in dom.getElementsByTagName('artist'):
-            artistSURI = artist.attributes.items()[0][1]
-            artist = artist.getElementsByTagName('name')[0].firstChild.nodeValue
-            if type == 'artist':
-                artists.append(artist)
-            else:
-                artists.append({'artist': artist, 'artistSURI': artistSURI})
-        data['artist'] = artists
-    except:
-        pass
-    
-    # Find the albums
-    albums = []
-    try:
-        for album in dom.getElementsByTagName('album'):
-            albumSURI = album.attributes.items()[0][1]
-            album = album.getElementsByTagName('name')[0].firstChild.nodeValue
-            if type == 'album':
-                albums.append(album)
-            else:
-                albums.append({'album': album, 'albumSURI': albumSURI})
-        data['album'] = albums
+    for artist in result['artists']:
+        artists.append({
+            'name': artist['name'],
+            'uri': artist['uri'],
+            'url': artist['external_urls']['spotify'],
+        })
 
-    except:
-        pass
+    data = {
+        'track': track,
+        'album': album,
+        'artists': artists,
+    }
 
-    context = {
-        'page_title': 'Spotify',
-        'type': type,
-        'title': data[type],
-        'uri': uri,
-        'data': data,
+    return data
+
+def album(type='albums',uri=None):
+    # https://api.spotify.com/v1/albums/6eUKZXaKkcviH0Ku9w2n3V
+    url = u'https://api.spotify.com/v1/%s/%s' % (type, uri)
+    result = json.loads(urlopen(url).read())
+
+    tracks = []
+    for track in result['tracks']['items']:
+        if ("NO" in track['available_markets']):
+            track = {
+                'name': track['name'],
+                'uri': track['uri'],
+                'url': track['external_urls']['spotify'],
+                }
+            tracks.append(track)
+
+    album = {
+        'name': result['name'],
+        'uri': result['uri'],
+        'url': result['external_urls']['spotify'],
+        }
+
+    artists = []
+    for artist in result['artists']:
+        artists.append({
+            'name': artist['name'],
+            'uri': artist['uri'],
+            'url': artist['external_urls']['spotify'],
+        })
+    data = {
+        'tracks': tracks,
+        'album': album,
+        'artists': artists,
+    }
+
+    return data
+
+def artist(type='artists',uri=None):
+    # https://api.spotify.com/v1/artists/6eUKZXaKkcviH0Ku9w2n3V
+    url = u'https://api.spotify.com/v1/%s/%s' % (type, uri)
+    result = json.loads(urlopen(url).read())
+
+    artist = {
+        'name': result['name'],
+        'uri': result['uri'],
+        'url': result['external_urls']['spotify'],
+        }
+
+    data = {
+        'tracks': '',
+        'album': '',
+        'artist': artist,
     }
     
-    return render(request, 'spotify.html', context)
+    return data
 
 def playlist(request):
     context = {
@@ -126,24 +184,24 @@ def playlist(request):
                 else:
                     length += 1
                     search = re.sub(wordseparator, '', i)
-                    search = re.sub(sanitize, '+', search)
-                    search = re.sub(r'\+$', '', search)
+                    search = re.sub(sanitize, '%20', search)
+                    search = re.sub(r'\%20$', '', search)
         
                     # Search for string
-                    # http://ws.spotify.com/search/1/track.json?q=search+string
+                    # https://api.spotify.com/v1/search?q=tania%20bowra&type=track&limit=1
                     try:
-                        url = u'http://ws.spotify.com/search/1/track.json?q=%s' % (search)
+                        url = u'https://api.spotify.com/v1/search?q=%s&type=track&limit=1' % (search)
                         result = json.loads(urlopen(url).read())
 
                         # Get artist, title and uri
                         artist = ''
-                        for a in result['tracks'][0]['artists']:
+                        for a in result['tracks']['items'][0]['artists']:
                             if (not artist):
                                 artist = a['name']
                             elif (not a['name'] in artist):
                                 artist = '%s, %s' % (artist, a['name'])
-                        title = result['tracks'][0]['name']
-                        uri = result['tracks'][0]['href']
+                        title = result['tracks']['items'][0]['name']
+                        uri = result['tracks']['items'][0]['uri']
                         url = uri.replace(
                                 ':', '/').replace(
                                 'spotify', 'http://open.spotify.com')
